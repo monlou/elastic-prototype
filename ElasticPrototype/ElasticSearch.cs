@@ -9,6 +9,16 @@ namespace ElasticPrototype {
     public class ElasticSearch {
         public static void elastic() {
             //Connect to ElasticSearch
+            var client = connect();
+
+            //Index into ElasticSearch
+            index(client);
+
+            //Search ElasticSearch indexes
+            search(client);
+        }
+
+        static ElasticLowLevelClient connect() {
             var uris = new[]
             {
                 new Uri("http://localhost:9200"),
@@ -21,24 +31,31 @@ namespace ElasticPrototype {
                 .RequestTimeout(TimeSpan.FromMinutes(2));
             var client = new ElasticLowLevelClient(settings);
 
-            //Index into ElasticSearch
+            return client;
+        }
+
+        static void index(ElasticLowLevelClient client) {
             var person = new Person
             {
                 FirstName = "Monique",
-                LastName = "Wink James1"
+                LastName = "Wink James"
             };
+
             //Synchronous methods, returns IIndexResponse
-            var indexResponse = client.Index<byte[]>("person", "1", person);
+            var indexResponse = client.Index<byte[]>("people", "person", "1", person);
             byte[] responseBytes = indexResponse.Body;
             Console.WriteLine("Index response: {0}", indexResponse);
+
             //Asynchronous method, returns Task<IIndexResponse>
             //var asyncIndexResponse = await client.IndexAsync<string>("people", "person", "1", person);
             //string responseString = asyncIndexResponse.Body;
             //Console.WriteLine("Index response: {0}", responseString);
+        }
 
-            //Search ElasticSearch indexes
-            var request = new {query = new {match = new {field = "firstName", query = "Martijn"}}};
-            var search = client.Search<string>("person");
+        static void search(ElasticLowLevelClient client) {
+            var request = new {query = new {term = new {Name = "Monique"}}};
+            var search = client.Search<string>("people", "person", request);
+
             var successful = search.Success;
             var responseJson = search.Body;
 
